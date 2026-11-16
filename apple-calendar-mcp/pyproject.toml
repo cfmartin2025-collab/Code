@@ -7,6 +7,7 @@ dependencies = [
     "mcp>=2.3,<3",
     "caldav>=3.7,<4",
     "icalendar>=7,<8",
+    "tzdata; sys_platform == 'win32'",  # Windows has no system tz database
 ]
 
 [project.scripts]

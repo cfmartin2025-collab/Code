@@ -39,6 +39,15 @@ pip install -e .
 
 ## Option A: Local (Claude Desktop / Claude Code)
 
+**Windows, the fast way:** download this repo as a ZIP, extract it, and double-click
+`apple-calendar-mcp\windows\install.cmd`. It installs Python if needed, builds a venv in
+`%LOCALAPPDATA%\apple-calendar-mcp`, asks for your Apple ID and app password, tests the login,
+adds the server to Claude Desktop's config (after making a backup), and restarts Claude Desktop.
+Your credentials go in a `.env` file only your Windows user can read, never in the Claude config.
+To remove everything, run `install.cmd -Uninstall`.
+
+The manual steps follow.
+
 Runs only while the PC is on. Takes about 5 minutes.
 
 **Claude Desktop**: open Settings, then Developer, then Edit Config (`claude_desktop_config.json`):

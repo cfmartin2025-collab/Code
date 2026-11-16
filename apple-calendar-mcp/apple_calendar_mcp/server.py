@@ -38,11 +38,18 @@ from mcp.types import ToolAnnotations
 
 
 def _load_dotenv() -> None:
-    """Minimal .env loader so there's no extra dependency."""
-    path = os.path.join(os.getcwd(), ".env")
-    if not os.path.exists(path):
+    """Minimal .env loader (no extra dependency).
+
+    Search order: $APPLE_CAL_ENV_FILE, ./.env, then the project folder's .env
+    (Claude Desktop does not launch the server from the install folder).
+    """
+    project_env = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+    for path in (os.environ.get("APPLE_CAL_ENV_FILE", ""), os.path.join(os.getcwd(), ".env"), project_env):
+        if path and os.path.isfile(path):
+            break
+    else:
         return
-    with open(path) as fh:
+    with open(path, encoding="utf-8-sig") as fh:
         for line in fh:
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
@@ -373,7 +380,25 @@ def main() -> None:
     p.add_argument("--http", action="store_true", help="serve streamable HTTP instead of stdio")
     p.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"))
     p.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8000")))
+    p.add_argument("--check", action="store_true", help="test iCloud login, list calendars, exit")
     args = p.parse_args()
+
+    if args.check:
+        sys.stdout.reconfigure(errors="replace")  # Windows console vs emoji calendar names
+        try:
+            cals = _calendars()
+        except Exception as exc:  # noqa: BLE001 - show the user whatever went wrong
+            print(f"FAILED: {type(exc).__name__}: {exc}", file=sys.stderr)
+            sys.exit(1)
+        print(f"OK - logged in as {USERNAME}, {len(cals)} calendar(s):")
+        for c in cals:
+            print(f"  - {c.get_display_name()}")
+        try:
+            n = len(list_events())
+            print(f"  {n} event(s) in the next 7 days")
+        except Exception as exc:  # noqa: BLE001
+            print(f"  (event read failed: {exc})", file=sys.stderr)
+        sys.exit(0)
 
     if not args.http:
         mcp.run("stdio")
